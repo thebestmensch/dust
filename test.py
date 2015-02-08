@@ -34,7 +34,7 @@ class Overview:
             class_info = demo.match.class_info
             time_offset = None
             last_minutes = -1
-            prev_items = []
+            items = {}
 
             game_meta_tables = received_tables.by_dt['DT_DOTAGamerulesProxy']
             game_status_index = game_meta_tables.by_name['dota_gamerules_data.m_nGameState']
@@ -42,7 +42,6 @@ class Overview:
             resolution = float(30)
             resolution_scale = resolution / 60
             for match in demo.play():
-                items = []
                 ## game data for this tick
                 game_meta = match.entities.by_cls[class_info['DT_DOTAGamerulesProxy']][0].state
                 current_game_status = game_meta.get(game_status_index)
@@ -86,24 +85,23 @@ class Overview:
                     localized_hero_name = heroes[hero_id]['localized_name']
 
                     hero_meta = match.entities.by_ehandle[hero_ehandle]
-                    items = []
+
                     try:
                         ## check all inventory slots
                         for j in range(70,76): 
                             item = hero_meta.state.get(j)
-                            if item not in items and item != 2097151:
-                                items.append(item)
-                        ## print items
-                        if len(items) > 0:                    
-                            for item in items:
+                            ## if item is not null
+                            if item != 2097151:
                                 item_name = match.entities.by_ehandle[item].state.get(name_index)
-                                if item_name is None:
+                                if len(item_name) == 0:
                                     continue
-                                elif len(item_name) > 0 and item not in prev_items:
-                                    print time_formatted, localized_hero_name, item_name
+                                if localized_hero_name not in items:
+                                    items[str(localized_hero_name)] = []
+                                ## add item to hero list if it doesn't exist already
+                                if len([tup for tup in items[localized_hero_name] if tup[1] == item_name]) == 0:
+                                    items[localized_hero_name].append((time_formatted, item_name))
                     except KeyError, IndexError:
-                        print 'error'
-                    prev_items = items
-
+                        pass
+            pp.pprint(items)
 test = Overview('replays/1195626066.dem')
 test.parse()

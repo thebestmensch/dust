@@ -26,6 +26,7 @@ class ItemTimings(object):
             demo_io = io_wrp_dm.Wrap(infile)
             demo_io.bootstrap() 
 
+            ## smoke parses the demo file
             parse = Data.All ^ (Data.GameEvents | Data.TempEntities)
             demo = rply_dm.Demo(demo_io, parse=parse)
             demo.bootstrap() 
@@ -33,10 +34,9 @@ class ItemTimings(object):
             ## meta
             received_tables = demo.match.recv_tables
             class_info = demo.match.class_info
-            time_offset = None
 
             ## the output list
-            output = []
+            output = {}
 
             ## find where the game_status data is located
             game_meta_tables = received_tables.by_dt['DT_DOTAGamerulesProxy']
@@ -58,53 +58,50 @@ class ItemTimings(object):
                     continue
                 
                 ## get current game time
-                time = game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_fGameTime']) - game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_flGameStartTime'])
-                if time_offset is None:
-                    time_offset = time
-
-                time -= time_offset
-                time_formatted = round((time / 60) * 10) / 10
-                resolution = float(30)
-                resolution_scale = resolution / 60
-                time_round = int(math.floor(time / resolution))
-
-                ## 
-                # if current_game_status < 6:
-                #     continue
-                # else:
-                #     match_id = game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_nMatchID'])
-                #     winner = game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_nGameWinner'])
-                if current_game_status == 6:
-                    # print game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_unMatchID'])
+                game_time = self.getTimer(game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_fGameTime']), game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_flGameStartTime']))
                     
                 # # The data loop, for each player
-                # for i in range(10):
-                #     # pass
-                #     ## get hero meta info
-                #     player_id = str(i).zfill(4)
-                #     hero_ehandle_index = rt.by_name['m_hSelectedHero.{:04d}'.format(i)]
-                #     hero_id_index = rt.by_name['m_nSelectedHeroID.{:04d}'.format(i)]
+                for i in range(10):
+                    # pass
+                    ## get hero meta info
+                    player_id = str(i).zfill(4)
+                    hero_ehandle_index = rt.by_name['m_hSelectedHero.{:04d}'.format(i)]
+                    hero_id_index = rt.by_name['m_nSelectedHeroID.{:04d}'.format(i)]
 
-                #     hero_id = current_data.get(hero_id_index)
-                #     hero_ehandle = current_data.get(hero_ehandle_index)
-                #     localized_hero_name = heroes[hero_id]['localized_name']
+                    hero_id = current_data.get(hero_id_index)
+                    hero_ehandle = current_data.get(hero_ehandle_index)
+                    localized_hero_name = heroes[hero_id]['localized_name']
 
-                #     hero_meta = match.entities.by_ehandle[hero_ehandle]
+                    hero_meta = match.entities.by_ehandle[hero_ehandle]
 
-                #     try:
-                #         ## check all inventory slots
-                #         for j in range(70,76): 
-                #             item = hero_meta.state.get(j)
-                #             ## if item is not null
-                #             if item != 2097151:
-                #                 item_name = match.entities.by_ehandle[item].state.get(name_index)
-                #                 if len(item_name) == 0:
-                #                     continue
-                #                 if localized_hero_name not in items:
-                #                     items[str(localized_hero_name)] = []
-                #                 ## add item to hero list if it doesn't exist already
-                #                 if len([tup for tup in items[localized_hero_name] if tup[1] == item_name]) == 0:
-                #                     items[localized_hero_name].append((time_formatted, item_name))
-                #     except KeyError, IndexError:
-                #         pass
+                    try:
+                        ## check all inventory slots
+                        for j in range(70,76): 
+                            item = hero_meta.state.get(j)
+                            ## if item is not null
+                            if item != 2097151:
+                                item_name = match.entities.by_ehandle[item].state.get(name_index)
+                                if len(item_name) == 0:
+                                    continue
+                                if localized_hero_name not in output:
+                                    output[str(localized_hero_name)] = []
+                                ## add item to hero list if it doesn't exist already
+                                if len([tup for tup in output[localized_hero_name] if tup[1] == item_name]) == 0:
+                                    output[localized_hero_name].append((game_time, item_name))
+                    except KeyError, IndexError:
+                        pass
             return output
+    def getTimer(self, game_time, start_time):
+        """
+        Returns formatted game time
+        @param int game_time   the current total time in game (including pick/ban stage, etc)
+        @param int start_time  the total time where the game timer started (0:00 on the clock)
+        @return int the game time in seconds
+        """
+        raw_time = game_time - start_time
+        return round((raw_time / 60) * 100) / 100
+
+
+
+
+

@@ -1,5 +1,6 @@
-DotoStats
+Dust
 =========
+[![Build Status](https://travis-ci.org/JMensch/dust.svg)](https://travis-ci.org/JMensch/dust)
 
 Dota2 stat engine.
 

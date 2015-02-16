@@ -10,3 +10,4 @@ Requirements
 * [cython](http://docs.cython.org/src/quickstart/install.html)
 * [palm](https://github.com/bumptech/palm)
 * [python-snappy](https://github.com/andrix/python-snappy)
+* [pandas](http://pandas.pydata.org/pandas-docs/stable/install.html)

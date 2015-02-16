@@ -3,6 +3,8 @@ import os
 import math
 import csv
 import io
+import pandas as pd
+import numpy as np
 
 from lib.heroes import heroes
 from smoke.io.wrap import demo as io_wrp_dm
@@ -36,7 +38,8 @@ class ItemTimings(object):
             class_info = demo.match.class_info
 
             ## the output list
-            output = {}
+            ## match_id | hero | item_x_name | item_x_time
+            output = []
 
             ## find where the game_status data is located
             game_meta_tables = received_tables.by_dt['DT_DOTAGamerulesProxy']
@@ -49,6 +52,9 @@ class ItemTimings(object):
                 world_data = match.entities.by_cls[class_info['DT_DOTA_PlayerResource']]
                 rt = received_tables.by_dt['DT_DOTA_PlayerResource']
                 current_data = world_data[0].state
+                
+                ## get the internal match id
+                match_id = game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_unMatchID64'])
 
                 ## index for an item's name
                 name_index = received_tables.by_dt['DT_DOTA_Item'].by_name['m_iName']  
@@ -59,7 +65,7 @@ class ItemTimings(object):
                 
                 ## get current game time
                 game_time = self.getTimer(game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_fGameTime']), game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_flGameStartTime']))
-                    
+
                 # # The data loop, for each player
                 for i in range(10):
                     # pass
@@ -81,16 +87,17 @@ class ItemTimings(object):
                             ## if item is not null
                             if item != 2097151:
                                 item_name = match.entities.by_ehandle[item].state.get(name_index)
-                                if len(item_name) == 0:
-                                    continue
-                                if localized_hero_name not in output:
-                                    output[str(localized_hero_name)] = []
-                                ## add item to hero list if it doesn't exist already
-                                if len([tup for tup in output[localized_hero_name] if tup[1] == item_name]) == 0:
-                                    output[localized_hero_name].append((game_time, item_name))
+                                if item_name is not None and len(item_name) > 0:
+                                    output.append([match_id, localized_hero_name, item_name, game_time])
                     except KeyError, IndexError:
                         pass
-            return output
+            ## dataframe preparation
+            res = pd.DataFrame(output, columns=['match_id', 'hero', 'item', 'item_purchase_time'])
+            res = res.drop_duplicates(['match_id','hero', 'item'], take_last=False)
+            res = res.sort(['hero','item_purchase_time'], ascending=True)
+            res = res.reset_index(drop=True)
+            res.index.name = 'id'
+            return res
     def getTimer(self, game_time, start_time):
         """
         Returns formatted game time

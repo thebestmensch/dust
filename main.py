@@ -7,6 +7,9 @@ Controller for command line parsing
 @since      2015-02-10
 """
 import optparse
+import pandas as pd
+import numpy as np
+
 from parse.itemTimings import ItemTimings
 from lib import csvUtil as CsvUtil
 
@@ -34,8 +37,10 @@ def getItemTimings(csv):
 	@return array itemTimings  the array of heroes, items bought, and time
 	"""
 	output = ItemTimings().parse('replays/1195864054_tongfu_rave.dem')
-	print output
+	# print output.loc[output['hero'] == 'Zeus']
+	# print output
 	# CsvUtil.write('test.csv', items)
+	output.to_csv('test.csv')
 
 if __name__ == '__main__':
 	desc = "Dota2 stats parser"

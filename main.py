@@ -40,18 +40,19 @@ def getItemTimings():
 	@param  string     replay       replay or replay directory
 	@return dataframe  itemTimings  the array of heroes, items bought, and time
 	"""
-	replay_dir = 'replays/'
-	replays = os.listdir('replays')
+	replay_dir = 'replays_2/'
+	replays = os.listdir('replays_2')
 	output = None
 	for replay in replays: 
 		if replay.index('.') == 0:
 			continue
 
 		replay = replay_dir + replay
-		if output is None:
-			output = ItemTimings().parse(replay)
-		else:
-			output = output.append(ItemTimings().parse(replay), ignore_index=True)
+		parsed_data = ItemTimings().parse(replay)
+		if output is None and parsed_data is not None:
+			output = parsed_data
+		elif parsed_data is not None:
+			output = output.append(parsed_data, ignore_index=True)
 	return output
 def getOverview():
 	"""
@@ -59,8 +60,8 @@ def getOverview():
 	@param  string    replay   replay or replay directory
 	@return dataframe the over data 
 	"""
-	replay_dir = 'replays/'
-	replays = os.listdir('replays')
+	replay_dir = 'replays_2/'
+	replays = os.listdir('replays_2')
 	output = None
 	for replay in replays:
 		## make sure we're not trying to parse system files
@@ -68,10 +69,13 @@ def getOverview():
 			continue
 
 		replay = replay_dir + replay
-		if output is None:
-			output = Overview().parse(replay)
-		else:
-			output = output.append(Overview().parse(replay), ignore_index=True)
+		##the parse
+		parsed_data = Overview().parse(replay)
+		##add parse to output if successful
+		if output is None and parsed_data is not None:
+			output = parsed_data
+		elif parsed_data is not None:
+			output = output.append(parsed_data, ignore_index=True)
 	return output
 
 if __name__ == '__main__':

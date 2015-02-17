@@ -37,6 +37,9 @@ class ItemTimings(object):
             received_tables = demo.match.recv_tables
             class_info = demo.match.class_info
 
+            ## get the internal match id
+            match_id = self.getMatchID(replay)
+
             ## the output list
             ## match_id | hero | item_x_name | item_x_time
             output = []
@@ -52,9 +55,6 @@ class ItemTimings(object):
                 world_data = match.entities.by_cls[class_info['DT_DOTA_PlayerResource']]
                 rt = received_tables.by_dt['DT_DOTA_PlayerResource']
                 current_data = world_data[0].state
-                
-                ## get the internal match id
-                match_id = game_meta.get(game_meta_tables.by_name['dota_gamerules_data.m_unMatchID64'])
 
                 ## index for an item's name
                 name_index = received_tables.by_dt['DT_DOTA_Item'].by_name['m_iName']  
@@ -76,7 +76,7 @@ class ItemTimings(object):
 
                     hero_id = current_data.get(hero_id_index)
                     hero_ehandle = current_data.get(hero_ehandle_index)
-                    localized_hero_name = heroes[hero_id]['localized_name']
+                    localized_hero_name = heroes[hero_id]['name']
 
                     hero_meta = match.entities.by_ehandle[hero_ehandle]
 
@@ -92,9 +92,9 @@ class ItemTimings(object):
                     except KeyError, IndexError:
                         pass
             ## dataframe preparation
-            res = pd.DataFrame(output, columns=['match_id', 'hero', 'item', 'item_purchase_time'])
-            res = res.drop_duplicates(['match_id','hero', 'item'], take_last=False)
-            res = res.sort(['hero','item_purchase_time'], ascending=True)
+            res = pd.DataFrame(output, columns=['match_id', 'hero_name', 'item', 'item_purchase_time'])
+            res = res.drop_duplicates(['match_id','hero_name', 'item'], take_last=False)
+            res = res.sort(['hero_name','item_purchase_time'], ascending=True)
             res = res.reset_index(drop=True)
             res.index.name = 'id'
             return res
@@ -107,6 +107,22 @@ class ItemTimings(object):
         """
         raw_time = game_time - start_time
         return round((raw_time / 60) * 100) / 100
+    def getMatchID(self, replay):
+        with io.open(replay, 'rb') as infile:
+            demo_io = io_wrp_dm.Wrap(infile)
+            
+            ## returns offset to overview
+            overview_offset = demo_io.bootstrap() 
+            
+            ## we can seek on the raw underlying IO instead of parsing everything
+            infile.seek(overview_offset)
+
+            demo = rply_dm.Demo(demo_io)
+            demo.finish()
+
+            ## get the raw overview data
+            data = demo.match.overview
+            return data['game']['match_id']
 
 
 

@@ -86,7 +86,7 @@ class ItemTimings(object):
 
                         try:
                             ## check all inventory slots
-                            for j in range(70,76): 
+                            for j in range(70,84): 
                                 item = hero_meta.state.get(j)
                                 ## if item is not null
                                 if item != 2097151:

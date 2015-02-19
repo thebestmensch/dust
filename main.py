@@ -40,8 +40,8 @@ def getItemTimings():
 	@param  string     replay       replay or replay directory
 	@return dataframe  itemTimings  the array of heroes, items bought, and time
 	"""
-	replay_dir = 'replays_2/'
-	replays = os.listdir('replays_2')
+	replay_dir = 'replays/'
+	replays = os.listdir('replays')
 	output = None
 	for replay in replays: 
 		if replay.index('.') == 0:
@@ -60,8 +60,8 @@ def getOverview():
 	@param  string    replay   replay or replay directory
 	@return dataframe the over data 
 	"""
-	replay_dir = 'replays_2/'
-	replays = os.listdir('replays_2')
+	replay_dir = 'replays/'
+	replays = os.listdir('replays')
 	output = None
 	for replay in replays:
 		## make sure we're not trying to parse system files
